@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import axios from 'axios';
-import { z } from "zod";
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"; // MCPサーバーをインポート
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"; // 標準入出力サーバーをインポート
+import axios from 'axios'; // HTTPクライアントをインポート
+import { HttpsProxyAgent } from 'https-proxy-agent'; // HTTPSプロキシエージェントをインポート
+import { z } from "zod"; // スキーマバリデーションライブラリをインポート
 
+// デバッグメッセージを出力する関数
 function debug(...args: any[]) {
   console.error('[DEBUG]', ...args);
 }
 
+// モック天気データを定義
 const MOCK_WEATHER_DATA: Record<string, any> = {
   "Fukuoka": {
     cityName: "Fukuoka",
@@ -37,9 +39,7 @@ const MOCK_WEATHER_DATA: Record<string, any> = {
   }
 };
 
-/**
- * Configure axios with proxy if available
- */
+// axiosをプロキシ設定で構成
 function configureAxios() {
   const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
   const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
@@ -54,82 +54,43 @@ function configureAxios() {
     axios.defaults.httpsAgent = new HttpsProxyAgent(httpProxy);
   }
   
-  axios.defaults.timeout = 5000;
+  axios.defaults.timeout = 5000; // タイムアウト時間を5秒に設定
 }
 
+// 天気コードと日本語の天気状態の対応を定義
 const weatherCodes: Record<number, string> = {
-  0: "Clear sky",
-  1: "Mainly clear",
-  2: "Partly cloudy",
-  3: "Overcast",
-  45: "Fog",
-  48: "Depositing rime fog",
-  51: "Light drizzle",
-  53: "Moderate drizzle",
-  55: "Dense drizzle",
-  56: "Light freezing drizzle",
-  57: "Dense freezing drizzle",
-  61: "Slight rain",
-  63: "Moderate rain",
-  65: "Heavy rain",
-  66: "Light freezing rain",
-  67: "Heavy freezing rain",
-  71: "Slight snow fall",
-  73: "Moderate snow fall",
-  75: "Heavy snow fall",
-  77: "Snow grains",
-  80: "Slight rain showers",
-  81: "Moderate rain showers",
-  82: "Violent rain showers",
-  85: "Slight snow showers",
-  86: "Heavy snow showers",
-  95: "Thunderstorm",
-  96: "Thunderstorm with slight hail",
-  99: "Thunderstorm with heavy hail",
+  0: "快晴",
+  1: "晴れ",
+  2: "晴れ時々曇り",
+  3: "曇り",
+  45: "霧",
+  48: "霧氷",
+  51: "小雨",
+  53: "霧雨",
+  55: "強い霧雨",
+  56: "弱い着氷性の霧雨",
+  57: "強い着氷性の霧雨",
+  61: "小雨",
+  63: "雨",
+  65: "大雨",
+  66: "弱い着氷性の雨",
+  67: "強い着氷性の雨",
+  71: "小雪",
+  73: "雪",
+  75: "大雪",
+  77: "霰",
+  80: "小雨のにわか雨",
+  81: "にわか雨",
+  82: "激しいにわか雨",
+  85: "小雪のにわか雪",
+  86: "激しいにわか雪",
+  95: "雷雨",
+  96: "小さな雹を伴う雷雨",
+  99: "大きな雹を伴う雷雨",
 };
 
-/**
- * Translate weather condition to Japanese
- */
-function translateConditionToJapanese(condition: string): string {
-  const translations: Record<string, string> = {
-    "Clear sky": "快晴",
-    "Mainly clear": "晴れ",
-    "Partly cloudy": "晴れ時々曇り",
-    "Overcast": "曇り",
-    "Fog": "霧",
-    "Depositing rime fog": "霧氷",
-    "Light drizzle": "小雨",
-    "Moderate drizzle": "霧雨",
-    "Dense drizzle": "強い霧雨",
-    "Light freezing drizzle": "弱い着氷性の霧雨",
-    "Dense freezing drizzle": "強い着氷性の霧雨",
-    "Slight rain": "小雨",
-    "Moderate rain": "雨",
-    "Heavy rain": "大雨",
-    "Light freezing rain": "弱い着氷性の雨",
-    "Heavy freezing rain": "強い着氷性の雨",
-    "Slight snow fall": "小雪",
-    "Moderate snow fall": "雪",
-    "Heavy snow fall": "大雪",
-    "Snow grains": "霰",
-    "Slight rain showers": "小雨のにわか雨",
-    "Moderate rain showers": "にわか雨",
-    "Violent rain showers": "激しいにわか雨",
-    "Slight snow showers": "小雪のにわか雪",
-    "Heavy snow showers": "激しいにわか雪",
-    "Thunderstorm": "雷雨",
-    "Thunderstorm with slight hail": "小さな雹を伴う雷雨",
-    "Thunderstorm with heavy hail": "大きな雹を伴う雷雨",
-    "Unknown": "不明"
-  };
-  
-  return translations[condition] || condition;
-};
 
-/**
- * Get weather information for a city
- */
+// 都市の天気情報を取得
 async function getWeatherForCity(city: string, useMockData: boolean = false) {
   try {
     const normalizedCity = city.trim();
@@ -140,6 +101,7 @@ async function getWeatherForCity(city: string, useMockData: boolean = false) {
       return MOCK_WEATHER_DATA[normalizedCity];
     }
     
+    // ジオコーディングAPIを使用して座標を取得
     const geocodingResponse = await axios.get(
       `https://geocoding-api.open-meteo.com/v1/search`,
       {
@@ -159,6 +121,7 @@ async function getWeatherForCity(city: string, useMockData: boolean = false) {
     const { latitude, longitude, name } = geocodingResponse.data.results[0];
     debug(`Found coordinates for ${name}: ${latitude}, ${longitude}`);
     
+    // 天気APIを使用して天気情報を取得
     const weatherResponse = await axios.get(
       `https://api.open-meteo.com/v1/forecast`,
       {
@@ -173,7 +136,7 @@ async function getWeatherForCity(city: string, useMockData: boolean = false) {
     );
     
     const weatherCode = weatherResponse.data.current.weather_code;
-    const weatherDescription = weatherCodes[weatherCode] || "Unknown";
+    const weatherDescription = weatherCodes[weatherCode] || "不明";
     
     return {
       cityName: name,
@@ -192,9 +155,7 @@ async function getWeatherForCity(city: string, useMockData: boolean = false) {
   }
 }
 
-/**
- * Main function to start the MCP server
- */
+// MCPサーバーを開始するメイン関数
 async function main() {
   debug('Starting MCP Weather Server');
   
@@ -233,11 +194,11 @@ async function main() {
             attempts++;
             debug(`Attempt ${attempts}/${maxAttempts} for city: ${city}`);
             
-            // On last attempt, use mock data if available
+            // 最後の試行では、可能であればモックデータを使用
             const useMockData = attempts === maxAttempts;
             const weather = await getWeatherForCity(city, useMockData);
             
-            const conditionJapanese = translateConditionToJapanese(weather.condition);
+            const conditionJapanese = weather.condition;
             
             return {
               content: [{

@@ -1,8 +1,9 @@
 {
   "name": "my-weather-mcp",
   "version": "0.1.0",
-  "description": "A simple MCP server for weather data",
+  "description": "天気情報を取得するMCPサーバー",
   "private": true,
+  "main": "build/index.js",
   "type": "module",
   "bin": {
     "my-weather-mcp": "./build/index.js"
