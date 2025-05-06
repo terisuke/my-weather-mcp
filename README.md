@@ -2,6 +2,10 @@
 
 このリポジトリは、Model Context Protocol (MCP) を使用して天気情報を提供するシンプルなサービスです。複数の都市（福岡、東京、大阪、モスクワ、ニューヨークなど）の天気情報を取得できます。
 
+<a href="https://glama.ai/mcp/servers/@terisuke/my-weather-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@terisuke/my-weather-mcp/badge" alt="Weather Service MCP server" />
+</a>
+
 ## 目次
 
 1. [前提条件](#前提条件)
