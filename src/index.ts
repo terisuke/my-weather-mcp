@@ -20,13 +20,13 @@ async function main() {
     },
     async ({ city }: { city: string }) => {
       try {
-        // 無料の天気API（OpenMeteo）を使用
+        // 無料の天気API（OpenMeteo）を使用 - Fukuokaの座標を使用
         const response = await axios.get(
           `https://api.open-meteo.com/v1/forecast`,
           {
             params: {
-              latitude: 35.6895,
-              longitude: 139.6917,
+              latitude: 33.6,
+              longitude: 130.41667,
               current: 'temperature_2m,weather_code',
               timezone: 'Asia/Tokyo'
             },
