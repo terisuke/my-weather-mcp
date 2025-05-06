@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import axios from 'axios';
 import { z } from "zod";
 
 async function main() {
@@ -20,28 +21,52 @@ async function main() {
     async ({ city }: { city: string }) => {
       try {
         // 無料の天気API（OpenMeteo）を使用
-        const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current=temperature_2m,weather_code&timezone=Asia/Tokyo`
+        const response = await axios.get(
+          `https://api.open-meteo.com/v1/forecast`,
+          {
+            params: {
+              latitude: 35.6895,
+              longitude: 139.6917,
+              current: 'temperature_2m,weather_code',
+              timezone: 'Asia/Tokyo'
+            },
+            timeout: 10000, // 10秒のタイムアウト
+            headers: {
+              'User-Agent': 'MCP Weather App',
+              'Accept': 'application/json'
+            }
+          }
         );
+
+        const data = response.data;
         
-        if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
-        }
+        // 天気コードを人間が読める形式に変換
+        const weatherDescription = getWeatherDescription(data.current.weather_code);
         
-        const data = await response.json();
-        
-        // 実際のAPIレスポンスを使って天気情報を整形
         return {
           content: [
             {
               type: "text",
-              text: `Weather in ${city}:\nTemperature: ${data.current.temperature_2m}${data.current_units.temperature_2m}\nCondition: ${getWeatherDescription(data.current.weather_code)}`,
+              text: `Weather in ${city}:\nTemperature: ${data.current.temperature_2m}${data.current_units.temperature_2m}\nCondition: ${weatherDescription}`,
             },
           ],
         };
       } catch (error: unknown) {
-        console.error("Error fetching weather:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        let errorMessage = "Unknown error";
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ECONNABORTED') {
+            errorMessage = "Request timed out. Please try again.";
+          } else if (error.response) {
+            errorMessage = `API request failed with status ${error.response.status}`;
+          } else if (error.request) {
+            errorMessage = "No response received from the server";
+          } else {
+            errorMessage = error.message;
+          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
         return {
           content: [
             {
@@ -93,11 +118,8 @@ async function main() {
   // MCPサーバーをトランスポートに接続
   const transport = new StdioServerTransport();
   await server.connect(transport);
-
-  console.log("MCP Server is running...");
 }
 
 main().catch((error) => {
-  console.error("Fatal error:", error);
   process.exit(1);
 });
