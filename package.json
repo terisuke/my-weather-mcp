@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "天気情報を取得するMCPサーバー",
   "private": true,
+  "license": "MIT",
   "main": "build/index.js",
   "type": "module",
   "bin": {
