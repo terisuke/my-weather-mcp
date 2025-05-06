@@ -1,0 +1,28 @@
+{
+  "name": "my-weather-mcp",
+  "version": "0.1.0",
+  "description": "A simple MCP server for weather data",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "my-weather-mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "start": "node build/index.js",
+    "dev": "ts-node src/index.ts",
+    "inspect": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
