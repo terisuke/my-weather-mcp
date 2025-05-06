@@ -267,10 +267,30 @@ npm run dev
 
 ## 4. Claude Desktop の MCP 設定
 
-1. Settings → Experimental Features で Model Context Protocol を ON
-2. Add endpoint → `http://localhost:6275/mcp` と入力し Save
+1. Claude Desktop を起動し、メニューバーの「Claude」→「Settings...」を選択
+2. 左側のメニューから「Developer」を選択
+3. 「Edit Config」ボタンをクリック
+4. エクスプローラーが開くので `claude_desktop_config.json` ファイルをテキストエディタで開く
+5. 以下のJSONを追加します：
 
-Firewall や VPN がある場合は localhost へのアクセスがブロックされていないか確認してください。
+```json
+{
+  "mcpServers": {
+    "weather": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/your/mcp-weather/dist/index.js"
+      ]
+    }
+  }
+}
+```
+
+注意: `args` のパスは、実際のプロジェクトのパスに置き換えてください。
+
+6. ファイルを保存し、Claude Desktop を再起動します。
+
+7. 🔨アイコンをクリックして「get-weather」が追加されていることを確認します。
 
 ---
 
