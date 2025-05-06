@@ -20,13 +20,34 @@ async function main() {
     },
     async ({ city }: { city: string }) => {
       try {
-        // 無料の天気API（OpenMeteo）を使用 - Fukuokaの座標を使用
+        const geocodingResponse = await axios.get(
+          `https://geocoding-api.open-meteo.com/v1/search`,
+          {
+            params: {
+              name: city,
+              count: 1
+            },
+            timeout: 10000, // 10秒のタイムアウト
+            headers: {
+              'User-Agent': 'MCP Weather App',
+              'Accept': 'application/json'
+            }
+          }
+        );
+        
+        if (!geocodingResponse.data.results || geocodingResponse.data.results.length === 0) {
+          throw new Error(`City "${city}" not found`);
+        }
+        
+        const { latitude, longitude } = geocodingResponse.data.results[0];
+        
+        // 無料の天気API（OpenMeteo）を使用 - 動的に取得した座標を使用
         const response = await axios.get(
           `https://api.open-meteo.com/v1/forecast`,
           {
             params: {
-              latitude: 33.6,
-              longitude: 130.41667,
+              latitude,
+              longitude,
               current: 'temperature_2m,weather_code',
               timezone: 'Asia/Tokyo'
             },
